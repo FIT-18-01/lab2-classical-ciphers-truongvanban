@@ -23,7 +23,6 @@ string rail_fence_encrypt(const string &plaintext, int rails) {
     int direction = 1;
 
     for (char c : plaintext) {
-        // TODO(student): Q6 can keep spaces as normal characters.
         fence[rail] += c;
         rail += direction;
         if (rail == rails - 1 || rail == 0) direction = -direction;
@@ -35,12 +34,44 @@ string rail_fence_encrypt(const string &plaintext, int rails) {
 }
 
 string rail_fence_decrypt(const string &ciphertext, int rails) {
-    // TODO(student): Q5
-    return ciphertext;
+    if (rails <= 1 || ciphertext.empty()) return ciphertext;
+
+    const int n = static_cast<int>(ciphertext.size());
+    vector<vector<char>> pattern(rails, vector<char>(n, '\0'));
+
+    int rail = 0;
+    int direction = 1;
+    for (int col = 0; col < n; ++col) {
+        pattern[rail][col] = '*';
+        rail += direction;
+        if (rail == rails - 1 || rail == 0) direction = -direction;
+    }
+
+    int idx = 0;
+    for (int r = 0; r < rails; ++r) {
+        for (int c = 0; c < n; ++c) {
+            if (pattern[r][c] == '*' && idx < n) {
+                pattern[r][c] = ciphertext[idx++];
+            }
+        }
+    }
+
+    string plaintext;
+    plaintext.reserve(n);
+    rail = 0;
+    direction = 1;
+    for (int col = 0; col < n; ++col) {
+        plaintext += pattern[rail][col];
+        rail += direction;
+        if (rail == rails - 1 || rail == 0) direction = -direction;
+    }
+
+    return plaintext;
 }
 
 string read_message_from_file(const string &path) {
     ifstream fin(path);
+    if (!fin.is_open()) return "";
     string line;
     getline(fin, line);
     return line;
@@ -67,6 +98,11 @@ int main() {
 
     cout << "Enter rails: ";
     cin >> rails;
+
+    if (rails < 2) {
+        cout << "Invalid rails. Please enter an integer >= 2.\n";
+        return 0;
+    }
 
     if (!is_valid_message(message)) {
         cout << "Invalid input. Only letters and spaces are allowed.\n";
